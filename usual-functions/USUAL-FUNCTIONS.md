@@ -1930,5 +1930,419 @@ print(sort_by_second(pairs))  # [(1, 'one'), (3, 'three'), (2, 'two')]
 import functools
 import operator
 
-# reduce - applique une fonction cumul
+# reduce - applique une fonction cumulativement aux éléments d'un itérable
+# format: reduce(function, iterable[, initializer])
+
+# Somme d'une liste
+numbers = [1, 2, 3, 4, 5]
+sum_result = functools.reduce(lambda x, y: x + y, numbers)
+print(sum_result)  # 15
+
+# Avec valeur initiale
+sum_with_init = functools.reduce(lambda x, y: x + y, numbers, 10)
+print(sum_with_init)  # 25 (10 + 1 + 2 + 3 + 4 + 5)
+
+# Utilisation avec operator
+product = functools.reduce(operator.mul, numbers)
+print(product)  # 120 (1 * 2 * 3 * 4 * 5)
+
+# Trouver le maximum d'une liste
+max_value = functools.reduce(lambda x, y: x if x > y else y, numbers)
+print(max_value)  # 5
+
+# Concaténation de chaînes
+words = ['Python', ' ', 'is', ' ', 'awesome']
+sentence = functools.reduce(operator.add, words)
+print(sentence)  # "Python is awesome"
+
+# reduce avec un dictionnaire
+people = [
+    {'name': 'Alice', 'age': 30},
+    {'name': 'Bob', 'age': 25},
+    {'name': 'Charlie', 'age': 35}
+]
+
+total_age = functools.reduce(lambda acc, person: acc + person['age'], people, 0)
+print(f"Âge moyen: {total_age / len(people)}")  # Âge moyen: 30.0
+
+# Implémentation de join avec reduce
+def join(separator, iterable):
+    return functools.reduce(
+        lambda acc, x: acc + separator + x if acc else x,
+        iterable,
+        ""
+    )
+
+print(join(", ", ["pommes", "bananes", "oranges"]))  # "pommes, bananes, oranges"
+
+# total_ordering - permet de définir toutes les méthodes de comparaison
+@functools.total_ordering
+class Person:
+    def __init__(self, name, age):
+        self.name = name
+        self.age = age
+
+    def __eq__(self, other):
+        return self.age == other.age
+
+    def __lt__(self, other):
+        return self.age < other.age
+
+# Grâce à total_ordering, les méthodes >, >=, et <= sont automatiquement définies
+p1 = Person("Alice", 30)
+p2 = Person("Bob", 25)
+print(p1 > p2)  # True
+print(p1 >= p2)  # True
+print(p1 <= p2)  # False
 ```
+
+## Fonctions du module collections
+
+Le module `collections` offre des alternatives spécialisées aux structures de données intégrées en Python.
+
+### Structures de données spécialisées
+
+```python
+from collections import namedtuple, deque, ChainMap, Counter, OrderedDict, defaultdict
+
+# namedtuple - tuple avec champs nommés
+Point = namedtuple('Point', ['x', 'y'])
+p = Point(10, 20)
+print(p.x, p.y)      # 10 20
+print(p[0], p[1])    # 10 20
+
+# deque - liste optimisée pour insertion/suppression aux extrémités
+queue = deque(["Eric", "John", "Michael"])
+queue.append("Terry")   # Ajoute à droite
+queue.appendleft("Graham")  # Ajoute à gauche
+print(queue)            # deque(['Graham', 'Eric', 'John', 'Michael', 'Terry'])
+popped = queue.pop()    # Supprime à droite
+popleft = queue.popleft()  # Supprime à gauche
+print(popped, popleft)  # Terry Graham
+print(queue)            # deque(['Eric', 'John', 'Michael'])
+
+# Utilisation de deque comme buffer circulaire
+recent_items = deque(maxlen=3)
+for i in range(5):
+    recent_items.append(i)
+print(recent_items)     # deque([2, 3, 4], maxlen=3)
+
+# ChainMap - combiner plusieurs dictionnaires
+default_settings = {'theme': 'Default', 'language': 'English'}
+user_settings = {'theme': 'Dark'}
+settings = ChainMap(user_settings, default_settings)
+print(settings['theme'])   # 'Dark' (de user_settings)
+print(settings['language'])  # 'English' (de default_settings)
+
+# Ajout d'un nouveau dictionnaire au début de la chaîne
+temporary_settings = {'theme': 'Light'}
+settings = ChainMap(temporary_settings, *settings.maps)
+print(settings['theme'])   # 'Light'
+
+# Counter - comptage d'éléments
+letters = Counter('abracadabra')
+print(letters)           # Counter({'a': 5, 'b': 2, 'r': 2, 'c': 1, 'd': 1})
+print(letters.most_common(2))  # [('a', 5), ('b', 2)]
+
+# OrderedDict - dictionnaire qui conserve l'ordre d'insertion
+# Note: Moins utile depuis Python 3.7 où les dictionnaires conservent l'ordre par défaut
+ordered = OrderedDict([('a', 1), ('b', 2), ('c', 3)])
+ordered['d'] = 4
+print(list(ordered.keys()))  # ['a', 'b', 'c', 'd']
+
+# defaultdict - dictionnaire avec valeur par défaut pour les clés absentes
+fruits = defaultdict(int)  # Valeur par défaut: 0
+fruits['pomme'] += 1
+fruits['banane'] += 2
+print(fruits['pomme'])      # 1
+print(fruits['orange'])     # 0 (clé inexistante, retourne la valeur par défaut)
+
+log_items = defaultdict(list)
+log_items['erreurs'].append('404 Not Found')
+log_items['erreurs'].append('500 Server Error')
+log_items['infos'].append('200 OK')
+print(log_items)
+# defaultdict(<class 'list'>, {'erreurs': ['404 Not Found', '500 Server Error'], 'infos': ['200 OK']})
+```
+
+### Comptage et regroupement
+
+```python
+from collections import Counter
+import itertools
+
+# Comptage de base
+mots = ["pomme", "banane", "pomme", "orange", "banane", "pomme"]
+compteur = Counter(mots)
+print(compteur)                # Counter({'pomme': 3, 'banane': 2, 'orange': 1})
+
+# Méthodes de Counter
+print(compteur.most_common())  # [('pomme', 3), ('banane', 2), ('orange', 1)]
+print(compteur.most_common(1)) # [('pomme', 3)]
+print(compteur['pomme'])       # 3
+print(compteur['kiwi'])        # 0 (clé inexistante, retourne 0)
+
+# Opérations arithmétiques avec Counter
+c1 = Counter(a=3, b=1)
+c2 = Counter(a=1, b=2)
+print(c1 + c2)                 # Counter({'a': 4, 'b': 3})
+print(c1 - c2)                 # Counter({'a': 2}) (supprime les nombres négatifs)
+print(c1 & c2)                 # Counter({'a': 1, 'b': 1}) (minimum de chaque clé)
+print(c1 | c2)                 # Counter({'a': 3, 'b': 2}) (maximum de chaque clé)
+
+# Mettre à jour un compteur
+compteur.update(["kiwi", "pomme"])
+print(compteur)                # Counter({'pomme': 4, 'banane': 2, 'orange': 1, 'kiwi': 1})
+
+# Soustraire des éléments
+compteur.subtract(["pomme", "pomme"])
+print(compteur)                # Counter({'pomme': 2, 'banane': 2, 'orange': 1, 'kiwi': 1})
+
+# Utilisation avec itertools.groupby
+items = ["apple", "apple", "banana", "banana", "banana", "cherry"]
+items.sort()  # groupby nécessite que les éléments soient triés
+
+for key, group in itertools.groupby(items):
+    print(key, ":", list(group))
+# apple : ['apple', 'apple']
+# banana : ['banana', 'banana', 'banana']
+# cherry : ['cherry']
+
+# Regroupement plus complexe
+data = [
+    {"category": "fruit", "name": "apple", "price": 1.0},
+    {"category": "fruit", "name": "banana", "price": 0.5},
+    {"category": "vegetable", "name": "carrot", "price": 0.8},
+    {"category": "vegetable", "name": "potato", "price": 0.4},
+    {"category": "fruit", "name": "orange", "price": 1.2}
+]
+
+# Tri par catégorie pour utiliser groupby
+data.sort(key=lambda x: x["category"])
+
+# Regroupement par catégorie
+for category, items in itertools.groupby(data, key=lambda x: x["category"]):
+    print(f"Category: {category}")
+    for item in items:
+        print(f"  - {item['name']}: ${item['price']}")
+```
+
+## Bonnes pratiques
+
+Voici quelques bonnes pratiques à suivre lors de l'utilisation des fonctions usuelles en Python:
+
+1. **Préférez les fonctions intégrées aux implémentations manuelles**
+
+   Utilisez les fonctions intégrées comme `len()`, `sum()`, `max()`, etc., plutôt que d'écrire vos propres versions. Elles sont plus optimisées et plus lisibles.
+
+   ```python
+   # Moins bien
+   total = 0
+   for num in numbers:
+       total += num
+
+   # Mieux
+   total = sum(numbers)
+   ```
+
+2. **Utilisez les compréhensions de liste avec modération**
+
+   Les compréhensions sont puissantes mais peuvent devenir difficiles à lire si elles sont trop complexes.
+
+   ```python
+   # Trop complexe
+   result = [x * y for x in range(10) if x % 2 == 0 for y in range(5) if y % 2 == 1]
+
+   # Plus lisible
+   result = []
+   for x in range(10):
+       if x % 2 == 0:
+           for y in range(5):
+               if y % 2 == 1:
+                   result.append(x * y)
+   ```
+
+3. **Utilisez les méthodes de chaîne appropriées**
+
+   Python offre de nombreuses méthodes pour traiter les chaînes efficacement.
+
+   ```python
+   # Moins efficace
+   if text.lower() == "yes" or text.lower() == "y":
+       process()
+
+   # Plus efficace
+   if text.lower() in {"yes", "y"}:
+       process()
+   ```
+
+4. **Exploitez les fonctions spécialisées des modules standards**
+
+   Apprenez à connaître les modules comme `itertools`, `functools`, et `collections` pour des solutions plus élégantes.
+
+   ```python
+   # Moins optimisé
+   def pairwise(iterable):
+       items = list(iterable)
+       return [(items[i], items[i+1]) for i in range(len(items)-1)]
+
+   # Plus optimisé
+   from itertools import pairwise  # Python 3.10+
+   pairs = pairwise([1, 2, 3, 4])  # (1,2), (2,3), (3,4)
+   ```
+
+5. **Utilisez des noms explicites pour les fonctions lambda**
+
+   Si une fonction lambda devient complexe, envisagez de la remplacer par une fonction nommée pour améliorer la lisibilité.
+
+   ```python
+   # Moins lisible
+   sorted_items = sorted(items, key=lambda x: (x['priority'], -x['timestamp']))
+
+   # Plus lisible
+   def sort_key(item):
+       return (item['priority'], -item['timestamp'])
+
+   sorted_items = sorted(items, key=sort_key)
+   ```
+
+6. **Préférez les structures de données appropriées**
+
+   Choisissez la structure de données qui convient le mieux à votre cas d'utilisation.
+
+   ```python
+   # Moins efficace pour les recherches fréquentes
+   users = [{"id": 1, "name": "Alice"}, {"id": 2, "name": "Bob"}]
+
+   # Plus efficace pour les recherches par ID
+   users_by_id = {user["id"]: user for user in users}
+   ```
+
+7. **Utilisez les fonctions de traitement par lot**
+
+   Pour certaines opérations, il est plus efficace de traiter les données par lot plutôt qu'élément par élément.
+
+   ```python
+   # Moins efficace
+   for item in items:
+       db.insert(item)
+
+   # Plus efficace
+   db.insert_many(items)
+   ```
+
+## Erreurs courantes
+
+Voici quelques erreurs courantes à éviter lors de l'utilisation des fonctions usuelles:
+
+1. **Modification d'une collection pendant l'itération**
+
+   ```python
+   # Problématique
+   items = [1, 2, 3, 4, 5]
+   for item in items:
+       if item % 2 == 0:
+           items.remove(item)  # Modifie la liste pendant l'itération!
+
+   # Solution
+   items = [item for item in items if item % 2 != 0]
+   # ou
+   items = list(filter(lambda x: x % 2 != 0, items))
+   ```
+
+2. **Utilisation inefficace des opérations sur les chaînes**
+
+   ```python
+   # Inefficace
+   result = ""
+   for word in words:
+       result += word + " "  # Crée une nouvelle chaîne à chaque itération
+
+   # Efficace
+   result = " ".join(words)
+   ```
+
+3. **Confusion entre valeurs et références**
+
+   ```python
+   # Problème potentiel
+   original = [1, 2, 3]
+   copy = original  # Référence, pas une copie!
+   copy.append(4)
+   print(original)  # [1, 2, 3, 4] - l'original est aussi modifié
+
+   # Solution
+   copy = original.copy()  # ou list(original)
+   ```
+
+4. **Oubli de la valeur de retour des méthodes de collections**
+
+   ```python
+   # Erreur
+   data = [3, 1, 4, 1, 5]
+   data.sort()  # Modifie la liste en place
+   data_sorted = data.sort()  # ERREUR: sort() retourne None!
+
+   # Correct
+   data = [3, 1, 4, 1, 5]
+   data.sort()  # Pour trier en place
+   # ou
+   data_sorted = sorted(data)  # Pour obtenir une nouvelle liste triée
+   ```
+
+5. **Mauvaise utilisation de `filter()`, `map()` et autres générateurs**
+
+   ```python
+   # Problème: résultat consommé une fois
+   filtered = filter(lambda x: x > 0, numbers)
+   print(list(filtered))  # Affiche correctement
+   print(list(filtered))  # Affiche [] car le générateur est déjà consommé
+
+   # Solution: créer une liste si vous devez réutiliser le résultat
+   filtered = list(filter(lambda x: x > 0, numbers))
+   ```
+
+6. **Préférer `in` pour les tests d'appartenance**
+
+   ```python
+   # Moins efficace, surtout pour les grands ensembles
+   found = False
+   for item in large_collection:
+       if item == target:
+           found = True
+           break
+
+   # Plus efficace
+   found = target in large_collection
+   ```
+
+7. **Ne pas utiliser les bons outils pour compter les éléments**
+
+   ```python
+   # Moins efficace
+   counts = {}
+   for item in items:
+       if item in counts:
+           counts[item] += 1
+       else:
+           counts[item] = 1
+
+   # Plus efficace
+   from collections import Counter
+   counts = Counter(items)
+   ```
+
+## Ressources supplémentaires
+
+- [Documentation officielle Python - Bibliothèque standard](https://docs.python.org/fr/3/library/index.html)
+- [Documentation Python - collections](https://docs.python.org/fr/3/library/collections.html)
+- [Documentation Python - itertools](https://docs.python.org/fr/3/library/itertools.html)
+- [Documentation Python - functools](https://docs.python.org/fr/3/library/functools.html)
+- [PEP 8 - Guide de style pour le code Python](https://peps.python.org/pep-0008/)
+- [Real Python - Python's map(), filter(), and reduce()](https://realpython.com/python-map-function/)
+- [Fluent Python - Livre par Luciano Ramalho](https://www.oreilly.com/library/view/fluent-python-2nd/9781492056348/)
+- [Python Cookbook - Recettes pour résoudre des problèmes courants](https://www.oreilly.com/library/view/python-cookbook-3rd/9781449357337/)
+
+---
+
+Ce chapitre vous a présenté les fonctions usuelles en Python, des manipulations de base aux techniques avancées. Ces outils vous permettront d'écrire un code plus concis, lisible et efficace. Dans le prochain chapitre, nous explorerons les appels HTTP et les requêtes réseau pour interagir avec des services web et des APIs.
